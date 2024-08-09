@@ -80,7 +80,7 @@ async function getDrafts(req, res) {
 async function notifications(req, res) {
   try {
     //const { data } = message;
-    console.log(req.body);
+    console.log("Notification: ",req.body);
   } catch (err) {
     console.log(err);
     res.send(err);
