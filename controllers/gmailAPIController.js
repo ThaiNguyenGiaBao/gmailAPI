@@ -4,6 +4,7 @@ const { google } = require("googleapis");
 const auth = require("../constant");
 require("dotenv").config();
 const { createConfig } = require("../utils");
+const gmail = google.gmail("v1");
 
 const oAuth2Client = new google.auth.OAuth2(
   auth.clientId,
@@ -92,18 +93,56 @@ async function notifications(req, res) {
 
       // Get the historyId from the message
       const { emailAddress, historyId } = parsedData;
-
-      // Get the history from the Gmail API
-      const url = `https://gmail.googleapis.com/gmail/v1/users/${emailAddress}/history?startHistoryId=${historyId}`;
-      const { token } = await oAuth2Client.getAccessToken();
-      const config = createConfig(url, token);
-      const response = await axios(config);
-      const history = response.data.history;
+      // Fetch the history list using the historyId
+      const gmailResponse = await gmail.users.history.list({
+        userId: "me",
+        startHistoryId: historyId,
+      });
+      const history = gmailResponse.data.history || [];
       console.log("History:", history);
+      for (const record of history) {
+        if (record.messagesAdded) {
+          for (const msg of record.messagesAdded) {
+            const messageId = msg.message.id;
 
-      // Get the messages from the history
-      const messages = history.filter((record) => record.messages);
-      console.log("Messages:", messages);
+            // Fetch the full message using the messageId
+            const messageResponse = await gmail.users.messages.get({
+              userId: "me",
+              id: messageId,
+            });
+
+            const message = messageResponse.data;
+
+            console.log("Full message data:", message);
+
+            // Extract and log the email content (subject, body, etc.)
+            const subjectHeader = message.payload.headers.find(
+              (header) => header.name === "Subject"
+            );
+            const subject = subjectHeader ? subjectHeader.value : "No Subject";
+
+            // The message body might be in different parts (plain text or HTML)
+            let body = "";
+            if (message.payload.parts) {
+              body = message.payload.parts
+                .map((part) => part.body.data)
+                .join("");
+            } else {
+              body = message.payload.body.data;
+            }
+
+            // Decode the base64url-encoded body
+            const decodedBody = Buffer.from(body, "base64url").toString(
+              "utf-8"
+            );
+
+            console.log("Subject:", subject);
+            console.log("Body:", decodedBody);
+
+            // Here you can process the message content as needed
+          }
+        }
+      }
     }
 
     res.status(200).send("OK");
