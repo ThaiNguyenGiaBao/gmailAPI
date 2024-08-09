@@ -92,34 +92,18 @@ async function notifications(req, res) {
 
       // Get the historyId from the message
       const { emailAddress, historyId } = parsedData;
-      // Fetch the history list using the historyId
-      const gmailResponse = await gmail.users.history.list({
-        userId: "me",
-        startHistoryId: historyId,
-      });
 
-      const history = gmailResponse.data.history || [];
+      // Get the history from the Gmail API
+      const url = `https://gmail.googleapis.com/gmail/v1/users/${emailAddress}/history?startHistoryId=${historyId}`;
+      const { token } = await oAuth2Client.getAccessToken();
+      const config = createConfig(url, token);
+      const response = await axios(config);
+      const history = response.data.history;
+      console.log("History:", history);
 
-      console.log("History data:", history);
-      for (const record of history) {
-        if (record.messagesAdded) {
-          for (const msg of record.messagesAdded) {
-            const messageId = msg.message.id;
-
-            // Fetch the full message using the messageId
-            const messageResponse = await gmail.users.messages.get({
-              userId: "me",
-              id: messageId,
-            });
-
-            const message = messageResponse.data;
-
-            console.log("Full message data:", message);
-
-            // Here you can process the message content as needed
-          }
-        }
-      }
+      // Get the messages from the history
+      const messages = history.filter((record) => record.messages);
+      console.log("Messages:", messages);
     }
 
     res.status(200).send("OK");
