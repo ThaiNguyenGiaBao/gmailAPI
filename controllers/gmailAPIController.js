@@ -91,25 +91,35 @@ async function notifications(req, res) {
       console.log("Received Pub/Sub message:", parsedData);
 
       // Get the historyId from the message
-      const historyId = parsedData.historyId;
+      const { emailAddress, historyId } = parsedData;
+      // Fetch the history list using the historyId
+      const gmailResponse = await gmail.users.history.list({
+        userId: "me",
+        startHistoryId: historyId,
+      });
 
-    //   // Use the historyId to fetch Gmail history and check for new messages
-    //   const gmailResponse = await gmail.users.history.list({
-    //     userId: "me",
-    //     startHistoryId: historyId,
-    //     labelId: "INBOX", // You can specify a label if you only want to check the inbox
-    //   });
+      const history = gmailResponse.data.history || [];
 
-    //   const history = gmailResponse.data.history || [];
-    //   for (const record of history) {
-    //     if (record.messagesAdded) {
-    //       for (const msg of record.messagesAdded) {
-    //         // Process new messages here
-    //         console.log("New message received:", msg);
-    //         // You can fetch more details about the message if needed
-    //       }
-    //     }
-    //   }
+      console.log("History data:", history);
+      for (const record of history) {
+        if (record.messagesAdded) {
+          for (const msg of record.messagesAdded) {
+            const messageId = msg.message.id;
+
+            // Fetch the full message using the messageId
+            const messageResponse = await gmail.users.messages.get({
+              userId: "me",
+              id: messageId,
+            });
+
+            const message = messageResponse.data;
+
+            console.log("Full message data:", message);
+
+            // Here you can process the message content as needed
+          }
+        }
+      }
     }
 
     res.status(200).send("OK");
