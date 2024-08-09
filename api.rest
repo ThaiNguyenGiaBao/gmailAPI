@@ -1,0 +1,9 @@
+###
+POST https://gmail.googleapis.com/gmail/v1/users/me/watch
+# headers: {
+#       Authorization: `Bearer ${accessToken}`,
+#       "Content-type": "application/json",
+#     },
+
+
+###
