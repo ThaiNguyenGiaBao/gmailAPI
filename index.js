@@ -4,6 +4,7 @@ const gmailAPIRouter = require("./routes/gmailAPIRouter");
 
 const app = express();
 const port = process.env.PORT || 8080;
+app.use(express.json());
 
 app.get("/", (req, res) => {
   res.send("Gmail APIs with nodejs");
