@@ -79,11 +79,43 @@ async function getDrafts(req, res) {
 
 async function notifications(req, res) {
   try {
-    //const { data } = message;
-    console.log("Notification: ",req.body);
-  } catch (err) {
-    console.log(err);
-    res.send(err);
+    const pubSubMessage = req.body.message;
+
+    if (pubSubMessage && pubSubMessage.data) {
+      // Decode the base64-encoded message data
+      const messageData = Buffer.from(pubSubMessage.data, "base64").toString(
+        "utf-8"
+      );
+      const parsedData = JSON.parse(messageData);
+
+      console.log("Received Pub/Sub message:", parsedData);
+
+      // Get the historyId from the message
+      const historyId = parsedData.historyId;
+
+    //   // Use the historyId to fetch Gmail history and check for new messages
+    //   const gmailResponse = await gmail.users.history.list({
+    //     userId: "me",
+    //     startHistoryId: historyId,
+    //     labelId: "INBOX", // You can specify a label if you only want to check the inbox
+    //   });
+
+    //   const history = gmailResponse.data.history || [];
+    //   for (const record of history) {
+    //     if (record.messagesAdded) {
+    //       for (const msg of record.messagesAdded) {
+    //         // Process new messages here
+    //         console.log("New message received:", msg);
+    //         // You can fetch more details about the message if needed
+    //       }
+    //     }
+    //   }
+    }
+
+    res.status(200).send("OK");
+  } catch (error) {
+    console.error("Error processing notification:", error);
+    res.status(500).send("Internal Server Error");
   }
 }
 
